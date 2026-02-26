@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { joinRoom, useGameRoom, sendResourceToTeamFund, Player, sendResourceToPlayer } from '../hooks/useGame';
+import { joinRoom, Player } from '../hooks/useGame';
 import QuizChallenge from '../components/QuizChallenge';
 import DuelChallenge from '../components/DuelChallenge';
 import PlayerDashboard from '../components/PlayerDashboard';

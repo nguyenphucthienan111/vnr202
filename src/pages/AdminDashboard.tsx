@@ -45,7 +45,7 @@ function AdminPanel({ pin }: { pin: string }) {
   if (loading || !room) return <div className="min-h-screen bg-[#2b2824] text-[#e6dfcc] font-mono p-8 typewriter-text animate-pulse">CONNECTING...</div>;
 
   const players = Object.values(room.players || {});
-  const totalFund = room.fund || 0;
+  const totalFund = Object.values(room.teams || {}).reduce((sum, team) => sum + (team.fund || 0), 0);
 
   const handleTriggerEvent = async (msg: string) => {
     await triggerEvent(pin, msg);
@@ -123,7 +123,7 @@ function AdminPanel({ pin }: { pin: string }) {
                   <th className="pb-3 px-2">ID</th>
                   <th className="pb-3 px-2">NAME</th>
                   <th className="pb-3 px-2">ROLE</th>
-                  <th className="pb-3 px-2 text-right">RESOURCES</th>
+                  <th className="pb-3 px-2 text-right">SCORE</th>
                 </tr>
               </thead>
               <tbody>
@@ -137,7 +137,7 @@ function AdminPanel({ pin }: { pin: string }) {
                       <td className="py-3 px-2 opacity-50 font-mono">{p.id.split('_')[2]}</td>
                       <td className="py-3 px-2 font-bold">{p.name}</td>
                       <td className="py-3 px-2">{p.role}</td>
-                      <td className="py-3 px-2 text-right font-mono font-bold text-[#e6dfcc]">{p.resources}</td>
+                      <td className="py-3 px-2 text-right font-mono font-bold text-[#e6dfcc]">{p.score}</td>
                     </tr>
                   ))
                 )}

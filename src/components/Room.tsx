@@ -1,4 +1,78 @@
 import * as THREE from 'three';
+import { useGLTF } from '@react-three/drei';
+
+function DeskModel() {
+  const gltf = useGLTF('/models/old_desk_04-freepoly.org.glb') as any;
+  const clonedScene = gltf.scene.clone();
+  return (
+    <primitive 
+      object={clonedScene} 
+      position={[0, 0, -2.5]} 
+      scale={[0.008, 0.008, 0.008]} 
+      castShadow 
+      receiveShadow 
+    />
+  );
+}
+
+function BookshelfModel() {
+  const gltf = useGLTF('/models/dusty_old_bookshelf_free.glb') as any;
+  const clonedScene = gltf.scene.clone();
+  return (
+    <primitive 
+      object={clonedScene} 
+      position={[-4.5, 0, 1]} 
+      scale={[0.01, 0.01, 0.01]} 
+      rotation={[0, Math.PI / 2, 0]}
+      castShadow 
+      receiveShadow 
+    />
+  );
+}
+
+function ChairModel() {
+  const gltf = useGLTF('/models/old_chair.glb') as any;
+  const clonedScene = gltf.scene.clone();
+  return (
+    <primitive 
+      object={clonedScene} 
+      position={[0, 0, -1.2]} 
+      scale={[0.008, 0.008, 0.008]} 
+      rotation={[0, Math.PI, 0]}
+      castShadow 
+      receiveShadow 
+    />
+  );
+}
+
+function TypewriterModel() {
+  const gltf = useGLTF('/models/typewriter.glb') as any;
+  const clonedScene = gltf.scene.clone();
+  return (
+    <primitive 
+      object={clonedScene} 
+      position={[0, 0.65, -2.5]} 
+      scale={[0.005, 0.005, 0.005]} 
+      rotation={[0, 0, 0]}
+      castShadow 
+      receiveShadow 
+    />
+  );
+}
+
+function LanternModel() {
+  const gltf = useGLTF('/models/lantern.glb') as any;
+  const clonedScene = gltf.scene.clone();
+  return (
+    <primitive 
+      object={clonedScene} 
+      position={[-0.8, 0.65, -2.6]} 
+      scale={[0.01, 0.01, 0.01]} 
+      castShadow 
+      receiveShadow 
+    />
+  );
+}
 
 export function Room() {
   return (
@@ -43,37 +117,12 @@ export function Room() {
         />
       </mesh>
 
-      {/* Bàn làm việc cơ bản */}
-      <group position={[0, 0, -2.5]}>
-        <mesh position={[0, 0.9, 0]} castShadow>
-          <boxGeometry args={[2, 0.08, 1]} />
-          <meshStandardMaterial color="#3e2723" roughness={0.7} />
-        </mesh>
-        <mesh position={[-0.9, 0.45, -0.4]} castShadow>
-          <boxGeometry args={[0.08, 0.9, 0.08]} />
-          <meshStandardMaterial color="#3e2723" />
-        </mesh>
-        <mesh position={[0.9, 0.45, -0.4]} castShadow>
-          <boxGeometry args={[0.08, 0.9, 0.08]} />
-          <meshStandardMaterial color="#3e2723" />
-        </mesh>
-        <mesh position={[-0.9, 0.45, 0.4]} castShadow>
-          <boxGeometry args={[0.08, 0.9, 0.08]} />
-          <meshStandardMaterial color="#3e2723" />
-        </mesh>
-        <mesh position={[0.9, 0.45, 0.4]} castShadow>
-          <boxGeometry args={[0.08, 0.9, 0.08]} />
-          <meshStandardMaterial color="#3e2723" />
-        </mesh>
-      </group>
-
-      {/* Kệ sách bên trái */}
-      <group position={[-4, 0, 2]}>
-        <mesh position={[0, 1.5, 0]} castShadow>
-          <boxGeometry args={[0.6, 3, 0.8]} />
-          <meshStandardMaterial color="#4a3728" roughness={0.8} />
-        </mesh>
-      </group>
+      {/* Các Models */}
+      <DeskModel />
+      <BookshelfModel />
+      <ChairModel />
+      <TypewriterModel />
+      <LanternModel />
 
       {/* Thùng gỗ bên phải */}
       <mesh position={[3.5, 0.4, -3]} castShadow>
@@ -106,3 +155,9 @@ export function Room() {
     </group>
   );
 }
+
+useGLTF.preload('/models/old_desk_04-freepoly.org.glb');
+useGLTF.preload('/models/dusty_old_bookshelf_free.glb');
+useGLTF.preload('/models/old_chair.glb');
+useGLTF.preload('/models/typewriter.glb');
+useGLTF.preload('/models/lantern.glb');
