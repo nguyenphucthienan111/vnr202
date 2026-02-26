@@ -8,28 +8,28 @@ const milestones = [
     title: "Đám mây đen Phát xít và Ánh sáng từ nước Pháp",
     content: "Chủ nghĩa phát xít đe dọa hòa bình thế giới. Tại Pháp, Mặt trận Nhân dân Pháp lên cầm quyền, ban bố các quyền tự do dân chủ, nới lỏng chính sách cai trị tại Đông Dương, thả một số tù chính trị.",
     year: "Đầu năm 1936",
-    image: "https://picsum.photos/seed/phatxit/800/600?grayscale"
+    image: "/dam_may_den.png"
   },
   {
     id: 2,
     title: "Hội nghị Ban Chấp hành Trung ương Đảng",
     content: "Do đồng chí Lê Hồng Phong chủ trì. Đảng quyết định chuyển hướng chiến lược: Tạm gác khẩu hiệu 'Độc lập dân tộc' và 'Cách mạng ruộng đất'. Mục tiêu trước mắt là: Chống phát xít, chống phản động thuộc địa, đòi tự do, dân chủ, cơm áo và hòa bình.",
     year: "Tháng 7/1936",
-    image: "https://picsum.photos/seed/hoinghi/800/600?grayscale"
+    image: "/hoi_nghi.png"
   },
   {
     id: 3,
     title: "Từ bí mật vươn ra ánh sáng",
     content: "Thành lập 'Mặt trận Dân chủ Đông Dương'. Chuyển từ đấu tranh bí mật sang kết hợp công khai, hợp pháp, nửa hợp pháp. Tận dụng triệt để diễn đàn báo chí công khai (các báo Tiền Phong, Dân Chúng, Tin Tức) và đấu tranh nghị trường.",
     year: "1937 - 1938",
-    image: "https://picsum.photos/seed/baochi/800/600?grayscale"
+    image: "/tu_bi_mat_vuon_ra_as.png"
   },
   {
     id: 4,
     title: "Cuộc biểu dương lực lượng khổng lồ",
     content: "Ngày Quốc tế Lao động 1/5/1938, một cuộc mít tinh công khai với hơn 2 vạn người tham gia đã diễn ra tại Khu Đấu xảo Hà Nội, đánh dấu sự trưởng thành vượt bậc của sức mạnh quần chúng.",
     year: "1/5/1938",
-    image: "https://picsum.photos/seed/dauxao/800/600?grayscale"
+    image: "/bieu_duong.png"
   }
 ];
 
@@ -113,8 +113,7 @@ function MilestoneCard({ m, index }: { m: any, index: number }) {
             <img 
               src={m.image} 
               alt={m.title}
-              referrerPolicy="no-referrer"
-              className="w-full h-auto object-cover filter sepia-[0.8] contrast-125 brightness-90 mix-blend-multiply"
+              className="w-full h-auto object-cover"
             />
             
             {/* Caption */}
