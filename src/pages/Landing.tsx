@@ -245,16 +245,29 @@ export default function Landing() {
             <div className="w-32 h-[3px] bg-[#1a1714]"></div>
           </div>
 
-          <button 
-            onClick={() => navigate('/play')}
-            className="group relative inline-flex items-center justify-center px-16 py-8 text-2xl font-black uppercase tracking-[0.2em] text-[#f5ede0] bg-[#8b1a1a] border-4 border-[#1a1714] overflow-hidden transition-all hover:scale-105 hover:bg-[#a52020] active:scale-95 shadow-[8px_8px_0px_rgba(26,23,20,0.5)] cursor-pointer"
-          >
-            <span className="relative typewriter-text flex items-center gap-3 ">
-              <span className="text-3xl">★</span>
-              Hóa thân vào Lịch sử
-              <span className="text-3xl">★</span>
-            </span>
-          </button>
+          <div className="flex flex-col md:flex-row gap-6 justify-center items-center mb-8">
+            <button 
+              onClick={() => navigate('/play')}
+              className="group relative inline-flex items-center justify-center px-12 py-6 text-xl font-black uppercase tracking-[0.2em] text-[#f5ede0] bg-[#8b1a1a] border-4 border-[#1a1714] overflow-hidden transition-all hover:scale-105 hover:bg-[#a52020] active:scale-95 shadow-[8px_8px_0px_rgba(26,23,20,0.5)] cursor-pointer"
+            >
+              <span className="relative typewriter-text flex items-center gap-3">
+                <span className="text-2xl">★</span>
+                Hóa thân vào Lịch sử
+                <span className="text-2xl">★</span>
+              </span>
+            </button>
+
+            <button 
+              onClick={() => navigate('/game3d')}
+              className="group relative inline-flex items-center justify-center px-12 py-6 text-xl font-black uppercase tracking-[0.2em] text-[#1a1714] bg-[#fbbf24] border-4 border-[#1a1714] overflow-hidden transition-all hover:scale-105 hover:bg-[#f59e0b] active:scale-95 shadow-[8px_8px_0px_rgba(26,23,20,0.5)] cursor-pointer"
+            >
+              <span className="relative typewriter-text flex items-center gap-3">
+                <span className="text-2xl">🎮</span>
+                60 Giây Tẩu Tán
+                <span className="text-2xl">🎮</span>
+              </span>
+            </button>
+          </div>
           
           <div className="mt-12 typewriter-text text-sm opacity-80 border-t-2 border-dashed border-[#1a1714] pt-8 max-w-md mx-auto">
             <p>Đồng chí là người điều phối?</p>
