@@ -1,0 +1,104 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Lora:ital,wght@0,400;0,700;1,400;1,700&family=JetBrains+Mono:wght@400;700&family=Special+Elite&family=EB+Garamond:ital,wght@0,400;0,700;0,900;1,400;1,700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "EB Garamond", "Lora", "Times New Roman", Times, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-typewriter: "Special Elite", monospace;
+  --font-headline: "Playfair Display", serif;
+}
+
+body {
+  background-color: #e8dfc7;
+  background-image: 
+    repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,.03) 2px, rgba(0,0,0,.03) 3px),
+    repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0,0,0,.03) 2px, rgba(0,0,0,.03) 3px),
+    url('https://www.transparenttextures.com/patterns/old-map.png');
+  color: #1a1714;
+}
+
+.newspaper-title {
+  font-family: var(--font-headline);
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+}
+
+.newspaper-text {
+  font-family: var(--font-serif);
+  line-height: 1.6;
+  text-align: justify;
+}
+
+.typewriter-text {
+  font-family: var(--font-typewriter);
+}
+
+.markdown-body {
+  font-family: var(--font-serif);
+}
+
+.markdown-body p {
+  margin-bottom: 0.5rem;
+}
+
+.markdown-body strong {
+  font-weight: 700;
+}
+
+/* Custom scrollbar for vintage feel */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #d4cbb3; 
+}
+::-webkit-scrollbar-thumb {
+  background: #5a554c; 
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2b2824; 
+}
+
+/* Ornamental decorations */
+.ornament-top::before,
+.ornament-top::after {
+  content: "❦";
+  position: absolute;
+  font-size: 2rem;
+  opacity: 0.3;
+}
+.ornament-top::before {
+  left: -3rem;
+}
+.ornament-top::after {
+  right: -3rem;
+}
+
+/* Newspaper column divider */
+.column-divider {
+  border-right: 2px solid #1a1714;
+  border-left: 1px solid #1a1714;
+}
+
+/* Vintage stamp effect */
+.stamp {
+  position: relative;
+  background: 
+    radial-gradient(circle at 0 0, transparent 8px, #8b0000 8px, #8b0000 10px, transparent 10px),
+    radial-gradient(circle at 100% 0, transparent 8px, #8b0000 8px, #8b0000 10px, transparent 10px),
+    radial-gradient(circle at 0 100%, transparent 8px, #8b0000 8px, #8b0000 10px, transparent 10px),
+    radial-gradient(circle at 100% 100%, transparent 8px, #8b0000 8px, #8b0000 10px, transparent 10px);
+  background-size: 20px 20px;
+  background-position: 0 0, 100% 0, 0 100%, 100% 100%;
+  background-repeat: repeat-y, repeat-y, repeat-x, repeat-x;
+}
+
+/* Drop cap for first letter */
+.drop-cap::first-letter {
+  float: left;
+  font-size: 5rem;
+  line-height: 0.8;
+  margin: 0.1em 0.1em 0 0;
+  font-weight: 900;
+  font-family: var(--font-headline);
+}

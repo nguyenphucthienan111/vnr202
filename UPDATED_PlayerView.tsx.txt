@@ -1,0 +1,372 @@
+// ⭐ UPDATED PlayerView.tsx WITH QUIZ INTEGRATION
+// Copy-paste các phần được đánh dấu vào file PlayerView.tsx của bạn
+
+import { useState, useEffect } from 'react';
+import { joinRoom, useGameRoom, sendResourceToTeamFund, Player, sendResourceToPlayer } from '../hooks/useGame';
+import { motion } from 'framer-motion';
+// ⭐ THÊM 3 DÒNG NÀY
+import { QuizQuestion } from '../components/QuizComponent';
+import { getNextQuestion } from '../data/questions';
+import type { Question } from '../data/questions';
+
+function MiniTimer({ endTime }: { endTime: number }) {
+  const [timeLeft, setTimeLeft] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = Date.now();
+      const remaining = Math.max(0, endTime - now);
+      setTimeLeft(remaining);
+      
+      if (remaining === 0) {
+        clearInterval(interval);
+      }
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [endTime]);
+
+  const minutes = Math.floor(timeLeft / 60000);
+  const seconds = Math.floor((timeLeft % 60000) / 1000);
+  const isUrgent = timeLeft < 60000;
+
+  return (
+    <div className={`text-center ${isUrgent ? 'animate-pulse' : ''}`}>
+      <div className="typewriter-text text-xs uppercase tracking-widest opacity-70">Thời gian</div>
+      <div className={`text-3xl font-black font-mono ${isUrgent ? 'text-[#8b1a1a]' : 'text-[#2b2824]'}`}>
+        {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+      </div>
+    </div>
+  );
+}
+
+export default function PlayerView() {
+  const [pin, setPin] = useState('');
+  const [name, setName] = useState('');
+  const [player, setPlayer] = useState<Player | null>(null);
+  const [error, setError] = useState('');
+
+  const handleJoin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pin || !name) return;
+    
+    try {
+      const newPlayer = await joinRoom(pin, name);
+      if (newPlayer) {
+        setPlayer(newPlayer);
+      } else {
+        setError('Không tìm thấy phong trào (Mã PIN sai)');
+      }
+    } catch (err) {
+      setError('Lỗi kết nối đường dây');
+    }
+  };
+
+  if (!player) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 selection:bg-[#2b2824] selection:text-[#e6dfcc]">
+        <form onSubmit={handleJoin} className="bg-[#f4ebd8] p-8 md:p-12 border-4 border-[#2b2824] shadow-[12px_12px_0px_0px_rgba(43,40,36,1)] max-w-md w-full relative">
+          <div className="absolute top-0 left-0 w-full h-2 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPjxwYXRoIGQ9Ik0wIDBMOCA4TTAgOEw4IDAiIHN0cm9rZT0iIzJiMjgyNCIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9zdmc+')]"></div>
+          
+          <h1 className="newspaper-title text-4xl font-black uppercase tracking-tighter mb-8 text-center border-b-4 border-double border-[#2b2824] pb-4 mt-4">
+            Tham Gia<br/>Phong Trào
+          </h1>
+          
+          {error && <div className="bg-[#8b0000] text-[#e6dfcc] p-3 mb-6 font-bold text-sm typewriter-text animate-pulse">{error}</div>}
+          
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-bold uppercase tracking-widest mb-2 typewriter-text">Bí danh (Tên)</label>
+              <input 
+                type="text" 
+                value={name}
+                onChange={e => setName(e.target.value)}
+                className="w-full bg-transparent border-b-2 border-dashed border-[#2b2824] focus:outline-none focus:border-solid focus:border-[#8b0000] py-2 text-xl font-bold font-serif"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold uppercase tracking-widest mb-2 typewriter-text">Mã Mật Khẩu (PIN)</label>
+              <input 
+                type="text" 
+                value={pin}
+                onChange={e => setPin(e.target.value)}
+                className="w-full bg-transparent border-b-2 border-dashed border-[#2b2824] focus:outline-none focus:border-solid focus:border-[#8b0000] py-2 text-2xl font-bold font-mono tracking-widest"
+                required
+              />
+            </div>
+            
+            <button 
+              type="submit"
+              className="w-full group relative inline-flex items-center justify-center px-8 py-4 text-xl font-bold uppercase tracking-widest text-[#e6dfcc] bg-[#2b2824] overflow-hidden transition-all hover:scale-105 active:scale-95 mt-8 cursor-pointer"
+            >
+              <span className="absolute inset-0 w-full h-full -mt-1 rounded-lg opacity-30 bg-gradient-to-b from-transparent via-transparent to-black"></span>
+              <span className="relative typewriter-text">Gia Nhập</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
+  return <PlayerDashboard pin={pin} playerId={player.id} initialPlayer={player} />;
+}
+
+function PlayerDashboard({ pin, playerId, initialPlayer }: { pin: string, playerId: string, initialPlayer: Player }) {
+  const { room, loading } = useGameRoom(pin);
+  const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
+
+  // ⭐ THÊM 4 DÒNG NÀY - Quiz State
+  const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
+  const [usedQuestionIds, setUsedQuestionIds] = useState<string[]>([]);
+  const [showQuiz, setShowQuiz] = useState(false);
+  const [delayTimer, setDelayTimer] = useState(0);
+
+  if (loading || !room) return <div className="min-h-screen flex items-center justify-center typewriter-text text-2xl animate-pulse">Đang kết nối đường dây...</div>;
+
+  const me = room.players[playerId] || initialPlayer;
+  const otherPlayers = Object.values(room.players).filter(p => p.id !== playerId);
+
+  const resourceNames: Record<string, string> = {
+    'Nhà báo': 'Bài viết/Truyền đơn',
+    'Công nhân': 'Lực lượng bãi công',
+    'Nông dân': 'Chữ ký dân nguyện',
+    'Tiểu thương': 'Tiền quỹ'
+  };
+
+  // ⭐ THÊM useEffect ĐỂ AUTO LOAD CÂU HỎI
+  useEffect(() => {
+    if (delayTimer > 0) {
+      const timer = setTimeout(() => {
+        setDelayTimer(dt => dt - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+    
+    if (delayTimer === 0 && room?.status === 'playing' && !currentQuestion && !showQuiz) {
+      const nextQ = getNextQuestion(usedQuestionIds);
+      if (nextQ) {
+        setCurrentQuestion(nextQ);
+        setUsedQuestionIds(prev => [...prev, nextQ.id]);
+        setShowQuiz(true);
+      }
+    }
+  }, [delayTimer, currentQuestion, showQuiz, room?.status, usedQuestionIds]);
+
+  // ⭐ THÊM HÀM XỬ LÝ KỘI KÍCH THÚC CÂU HỎI
+  const handleQuestionEnd = () => {
+    setShowQuiz(false);
+    setCurrentQuestion(null);
+    setDelayTimer(3);
+  };
+
+  // ⭐ HIỂN THỊ QUIZ NẾU ĐANG CHƠI
+  if (showQuiz && currentQuestion && room.status === 'playing') {
+    return (
+      <div className="min-h-screen p-4 md:p-8 selection:bg-[#2b2824] selection:text-[#e6dfcc] flex items-center justify-center">
+        <QuizQuestion
+          question={currentQuestion}
+          pin={pin}
+          playerId={playerId}
+          onQuestionEnd={handleQuestionEnd}
+          isHost={false}
+        />
+      </div>
+    );
+  }
+
+  if (room.status === 'waiting') {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center selection:bg-[#2b2824] selection:text-[#e6dfcc]">
+        <h2 className="newspaper-title text-3xl font-bold uppercase mb-6">Đã gia nhập phong trào</h2>
+        <motion.div 
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="bg-[#f4ebd8] p-10 border-4 border-double border-[#2b2824] shadow-[12px_12px_0px_0px_rgba(43,40,36,1)] mb-12 relative"
+        >
+          <div className="absolute top-2 left-2 w-3 h-3 rounded-full bg-[#2b2824]/30"></div>
+          <div className="absolute top-2 right-2 w-3 h-3 rounded-full bg-[#2b2824]/30"></div>
+          <div className="absolute bottom-2 left-2 w-3 h-3 rounded-full bg-[#2b2824]/30"></div>
+          <div className="absolute bottom-2 right-2 w-3 h-3 rounded-full bg-[#2b2824]/30"></div>
+          
+          <div className="typewriter-text text-sm font-bold tracking-widest uppercase mb-4 opacity-70 border-b border-[#2b2824] pb-2">Bí danh</div>
+          <div className="newspaper-title text-5xl font-black uppercase text-[#8b1a1a]">{me.name}</div>
+        </motion.div>
+        <p className="newspaper-text text-2xl italic animate-pulse">Chờ lệnh từ Đài Phát Thanh Trung Ương...</p>
+        <p className="newspaper-text text-lg mt-4 opacity-70">Vai trò và nhóm sẽ được phân công khi bắt đầu</p>
+      </div>
+    );
+  }
+
+  const myTeam = me.teamId ? room.teams[me.teamId] : null;
+  const teammates = myTeam ? myTeam.members.map(id => room.players[id]).filter(p => p && p.id !== playerId) : [];
+  const otherTeamPlayers = Object.values(room.players).filter(p => p.teamId !== me.teamId && p.teamId);
+  
+  // Get team ranking
+  const rankedTeams = Object.values(room.teams).sort((a, b) => b.fund - a.fund);
+  const myTeamRank = myTeam ? rankedTeams.findIndex(t => t.id === myTeam.id) + 1 : 0;
+
+  const handleSendToFund = async () => {
+    if (me.resources > 0 && myTeam) {
+      await sendResourceToTeamFund(pin, playerId, myTeam.id, 1);
+      playSfx();
+    }
+  };
+
+  const handleSendToPlayer = async () => {
+    if (me.resources > 0 && selectedPlayer) {
+      await sendResourceToPlayer(pin, playerId, selectedPlayer, 1);
+      playSfx();
+      setSelectedPlayer(null);
+    }
+  };
+
+  const playSfx = () => {
+    const audio = new Audio('https://actions.google.com/sounds/v1/office/typewriter_bell.ogg');
+    audio.volume = 0.6;
+    audio.play().catch(() => {});
+  };
+
+  return (
+    <div className="min-h-screen p-4 md:p-8 selection:bg-[#2b2824] selection:text-[#e6dfcc]">
+      <div className="max-w-md mx-auto">
+        {/* ⭐ THÊM DELAY TIMER DISPLAY */}
+        {delayTimer > 0 && room.status === 'playing' && (
+          <div className="mb-6 bg-[#f4ebd8] border-4 border-[#2b2824] p-8 text-center shadow-[12px_12px_0px_0px_rgba(43,40,36,1)]">
+            <div className="typewriter-text text-lg font-bold mb-4">Câu hỏi tiếp theo trong</div>
+            <div className="text-6xl font-black font-mono text-[#8b1a1a]">{delayTimer}s</div>
+          </div>
+        )}
+
+        {/* Timer and Team Ranking Badge */}
+        <div className="mb-6 space-y-4">
+          {/* Timer */}
+          {room.endTime && (
+            <motion.div 
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-[#f4ebd8] border-4 border-[#2b2824] p-4 shadow-[6px_6px_0px_rgba(43,40,36,0.5)]"
+            >
+              <MiniTimer endTime={room.endTime} />
+            </motion.div>
+          )}
+          
+          {/* Team Ranking */}
+          {myTeam && (
+            <motion.div 
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-[#2b2824] text-[#e6dfcc] p-4 border-4 border-[#8b1a1a] shadow-[6px_6px_0px_rgba(139,26,26,0.5)] text-center"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="text-sm typewriter-text uppercase tracking-widest opacity-80">Xếp hạng</div>
+                  <div className="text-5xl font-black">
+                    {myTeamRank === 1 ? '🥇' : myTeamRank === 2 ? '🥈' : myTeamRank === 3 ? '🥉' : `#${myTeamRank}`}
+                  </div>
+                </div>
+                <div className="flex-1 border-l-2 border-[#8b1a1a] pl-4">
+                  <div className="text-sm typewriter-text uppercase tracking-widest opacity-80">{myTeam.name}</div>
+                  <div className="text-4xl font-black font-mono">{myTeam.fund}</div>
+                  <div className="text-xs opacity-70">/ 100 điểm</div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </div>
+
+        {/* Player Card */}
+        <div className="bg-[#f4ebd8] p-8 border-4 border-[#2b2824] shadow-[12px_12px_0px_0px_rgba(43,40,36,1)] mb-10 relative overflow-hidden">
+          <div className="absolute top-0 right-0 bg-[#2b2824] text-[#e6dfcc] px-4 py-2 text-xs font-bold uppercase tracking-widest typewriter-text">
+            Thẻ Căn Cước
+          </div>
+          <h2 className="newspaper-title text-3xl font-black uppercase mb-2 mt-4">{me.name}</h2>
+          <div className="text-xl font-bold text-[#8b1a1a] uppercase tracking-widest mb-8 typewriter-text">{me.role}</div>
+          
+          <div className="border-t-4 border-double border-[#2b2824] pt-6">
+            <div className="typewriter-text text-sm font-bold uppercase opacity-70 mb-2">Tài sản hiện có</div>
+            <div className="flex justify-between items-end">
+              <div className="text-xl font-bold font-serif max-w-[60%] leading-tight">{resourceNames[me.role]}</div>
+              <div className="text-6xl font-black font-mono tracking-tighter bg-[#2b2824] text-[#e6dfcc] px-4 py-2">{me.resources}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="space-y-8">
+          <button 
+            onClick={handleSendToFund}
+            disabled={me.resources <= 0}
+            className="w-full group relative inline-flex items-center justify-center px-8 py-6 text-xl font-bold uppercase tracking-widest text-[#e6dfcc] bg-[#8b1a1a] overflow-hidden transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed shadow-[8px_8px_0px_0px_rgba(43,40,36,0.5)] cursor-pointer"
+          >
+            <span className="absolute inset-0 w-full h-full -mt-1 rounded-lg opacity-30 bg-gradient-to-b from-transparent via-transparent to-black"></span>
+            <span className="relative typewriter-text">Đóng góp Quỹ Nhóm</span>
+          </button>
+
+          {/* Teammates Section */}
+          {teammates.length > 0 && (
+            <div className="bg-[#f4ebd8] p-6 border-2 border-[#2b2824]">
+              <h3 className="newspaper-title text-xl font-bold uppercase mb-4 border-b-2 border-[#2b2824] pb-2">Đồng đội của bạn</h3>
+              <div className="space-y-2">
+                {teammates.map(p => (
+                  <div key={p.id} className="flex justify-between items-center border border-[#2b2824] p-2 bg-[#e8dfc7]">
+                    <div>
+                      <div className="font-bold">{p.name}</div>
+                      <div className="text-xs typewriter-text opacity-70">{p.role}</div>
+                    </div>
+                    <div className="font-mono font-black bg-[#2b2824] text-[#e6dfcc] px-2 py-1 text-sm">{p.resources}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="bg-[#f4ebd8] p-8 border-2 border-dashed border-[#2b2824]">
+            <h3 className="newspaper-title text-2xl font-bold uppercase mb-6 border-b-2 border-[#2b2824] pb-2">Hỗ trợ Đồng chí</h3>
+            <select 
+              className="w-full bg-transparent border-2 border-[#2b2824] p-4 mb-6 font-bold focus:outline-none font-serif text-lg appearance-none cursor-pointer"
+              value={selectedPlayer || ''}
+              onChange={e => setSelectedPlayer(e.target.value)}
+              style={{ backgroundImage: `url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%232b2824%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right .7em top 50%', backgroundSize: '.65em auto' }}
+            >
+              <option value="">-- Chọn người nhận --</option>
+              <optgroup label="Đồng đội">
+                {teammates.map(p => (
+                  <option key={p.id} value={p.id}>👥 {p.name} ({p.role})</option>
+                ))}
+              </optgroup>
+              <optgroup label="Nhóm khác">
+                {otherTeamPlayers.map(p => (
+                  <option key={p.id} value={p.id}>🤝 {p.name} ({p.role})</option>
+                ))}
+              </optgroup>
+            </select>
+            <button 
+              onClick={handleSendToPlayer}
+              disabled={me.resources <= 0 || !selectedPlayer}
+              className="w-full group relative inline-flex items-center justify-center px-8 py-4 text-lg font-bold uppercase tracking-widest text-[#e6dfcc] bg-[#2b2824] overflow-hidden transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed cursor-pointer"
+            >
+              <span className="absolute inset-0 w-full h-full -mt-1 rounded-lg opacity-30 bg-gradient-to-b from-transparent via-transparent to-black"></span>
+              <span className="relative typewriter-text">Gửi Viện Trợ</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Events Log */}
+        {room.events && room.events.length > 0 && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            key={room.events[room.events.length - 1].timestamp}
+            className="mt-10 bg-[#2b2824] text-[#e6dfcc] p-6 border-l-8 border-[#8b1a1a] shadow-xl"
+          >
+            <h3 className="typewriter-text text-sm font-bold uppercase tracking-widest mb-3 opacity-70">Tin Khẩn</h3>
+            <div className="newspaper-text text-xl font-bold animate-pulse">
+              {room.events[room.events.length - 1].message}
+            </div>
+          </motion.div>
+        )}
+      </div>
+    </div>
+  );
+}
